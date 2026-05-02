@@ -2,6 +2,7 @@ package com.v2ray.ang.ui
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -23,6 +24,7 @@ import com.v2ray.ang.extension.toastError
 import com.v2ray.ang.extension.toastSuccess
 import com.v2ray.ang.handler.AngConfigManager
 import com.v2ray.ang.handler.MmkvManager
+import com.v2ray.ang.handler.SettingsChangeManager
 import com.v2ray.ang.helper.SimpleItemTouchHelperCallback
 import com.v2ray.ang.util.LogUtil
 import com.v2ray.ang.viewmodel.MainViewModel
@@ -44,6 +46,13 @@ class GroupServerFragment : BaseFragment<FragmentGroupServerBinding>(),
     private val share_method_more: Array<out String> by lazy {
         ownerActivity.resources.getStringArray(R.array.share_method_more)
     }
+
+    private val serverCustomConfigLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            if (SettingsChangeManager.consumeRestartService() && mainViewModel.isRunning.value == true) {
+                ownerActivity.restartV2Ray()
+            }
+        }
 
     companion object {
         private const val ARG_SUB_ID = "subscriptionId"
@@ -174,7 +183,7 @@ class GroupServerFragment : BaseFragment<FragmentGroupServerBinding>(),
             .putExtra("subscriptionId", subId)
         when (profile.configType) {
             EConfigType.CUSTOM -> {
-                ownerActivity.startActivity(intent.setClass(ownerActivity, ServerCustomConfigActivity::class.java))
+                serverCustomConfigLauncher.launch(intent.setClass(ownerActivity, ServerCustomConfigActivity::class.java))
             }
 
             EConfigType.POLICYGROUP -> {
